@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import User from "../models/user.model";
 
 import { connectToDB } from "../mongoose";
+import Thread from "../models/thread.model";
 
 
 interface Params {
@@ -59,3 +60,27 @@ export async function fetchUser(userId:string){
   }
 }
 
+export async function fetchUserPost(userId:string) {
+  try {
+    connectToDB()
+
+    // find all thread
+    const threads = await User.findOne({id:userId})
+    .populate({
+      path:'threads',
+      model:Thread,
+      populate:{
+        path:'children',
+        model:Thread,
+        populate:{
+          path:'author',
+          model:User,
+          select:'name image id'
+        }
+      }
+    })
+    return threads
+  } catch (error) {
+    throw new Error(`Failed to fetch user post`)
+  }
+}
